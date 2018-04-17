@@ -4,6 +4,7 @@
   "description": "N/A",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,6 +22,9 @@
   "homepage": "https://github.com/Holovin/lp_client#readme",
   "dependencies": {
     "dotenv": "^5.0.1",
+    "lodash": "^4.17.5",
+    "moment": "^2.22.1",
+    "moment-timezone": "^0.5.15",
     "request": "^2.85.0",
     "request-promise": "^4.2.2"
   }
