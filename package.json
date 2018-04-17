@@ -1,0 +1,27 @@
+{
+  "name": "lp_client",
+  "version": "0.0.1",
+  "description": "N/A",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Holovin/lp_client.git"
+  },
+  "keywords": [
+    "LP"
+  ],
+  "author": "Alexander Holovin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Holovin/lp_client/issues"
+  },
+  "homepage": "https://github.com/Holovin/lp_client#readme",
+  "dependencies": {
+    "dotenv": "^5.0.1",
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2"
+  }
+}
