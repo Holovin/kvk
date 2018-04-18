@@ -5,7 +5,7 @@ function processTimestamp(timestampInput, addFrom = false) {
     const timestampStr = `${moment(timestamp).format('DD/MM/YYYY HH:mm:ss')}`;
 
     if (addFrom) {
-        return `${timestampStr} (через ${moment(timestamp).fromNow()})`;
+        return `${timestampStr} (${moment(timestamp).fromNow()})`;
     }
 
     return timestampStr;

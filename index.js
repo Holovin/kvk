@@ -5,7 +5,7 @@ const request = require('request-promise-native');
 const req = request.defaults({
     headers: {
         'User-Agent': process.env.ua,
-    }
+    },
 });
 
 const to = require('await-to-js').to;
@@ -75,7 +75,7 @@ async function gameWaiter() {
         const lp_params = url_params.query;
 
         // [https://....?] part
-        const lp_url = `${url_params.protocol}//${url_params.host}`;
+        const lp_url = `${url_params.protocol}//${url_params.host}${url_params.pathname}`;
 
         if (lp_url) {
             await getNextEvent(lp_url, lp_params);
@@ -134,10 +134,9 @@ async function getNextEvent(lp_url, lp_params) {
 
     // seems ok?
     if (response.events.length > 0) {
-
         // wtf is <!>0?
         response.events.forEach(rawEvent => {
-            const event = JSON.parse(trimEnd(response.events[0], '<!>0'));
+            const event = JSON.parse(trimEnd(rawEvent, '<!>0'));
 
             // take question ->
             if (event.type === 'sq_question' || event.type === 'sq_question_answers_right') {
@@ -152,7 +151,11 @@ async function getNextEvent(lp_url, lp_params) {
 
                 } else {
                     get(event, 'question.answers', []).forEach(answer => {
-                        answers.push(`${answer.text} (${answer.users_answered})`);
+                        if (get(event, 'question.right_answer_id') === answer.id) {
+                            answers.push(`>>> ${answer.text} (${answer.users_answered})`);
+                        } else {
+                            answers.push(`${answer.text} (${answer.users_answered})`);
+                        }
                     });
                 }
 
