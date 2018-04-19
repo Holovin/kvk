@@ -153,6 +153,8 @@ async function getNextEvent(lp_url, lp_params) {
                         answers.push(answer.text);
                     });
 
+                    console.log(encodeURIComponent(`https://www.google.com/search?q=${question}`));
+
                 } else {
                     get(event, 'question.answers', []).forEach(answer => {
                         if (get(event, 'question.right_answer_id') === answer.id) {
@@ -165,7 +167,6 @@ async function getNextEvent(lp_url, lp_params) {
 
                 // TODO: rework after tests
                 console.log(`${number}. ${question}\n > ${answers.join('\n > ')}`);
-                opn(`'https://www.google.com/search?q=${question}`);
             }
 
             // ITS TIME TO STOP, OKAY?
