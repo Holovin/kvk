@@ -126,6 +126,8 @@ async function getNextEvent(lp_url, lp_params) {
         json: true,
     }));
 
+    console.log('ok!', Date());
+
     if (err || checkApiError(response)) {
         console.warn(err);
 
@@ -153,7 +155,7 @@ async function getNextEvent(lp_url, lp_params) {
                         answers.push(answer.text);
                     });
 
-                    console.log(encodeURIComponent(`https://www.google.com/search?q=${question}`));
+                    opn((`https://www.google.com/search?q=${question}`));
 
                 } else {
                     get(event, 'question.answers', []).forEach(answer => {
