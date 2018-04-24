@@ -1,22 +1,26 @@
 const dotenv = require('dotenv').config();
 
+// request
 const request = require('request-promise-native');
-
 const req = request.defaults({
     headers: {
         'User-Agent': process.env.ua,
     },
 });
-
 const to = require('await-to-js').to;
 const url = require('url');
 
+// moment
 const moment = require('moment-timezone');
 moment.tz.setDefault('Europe/Minsk');
 moment.locale('ru');
 
+// lodash
 const get = require('lodash/get');
 const trimEnd = require('lodash/trimEnd');
+
+// other
+const opn = require('opn');
 
 // helpers
 const checkApiError = require('./helpers/checkApiError');
@@ -122,6 +126,8 @@ async function getNextEvent(lp_url, lp_params) {
         json: true,
     }));
 
+    console.log('Event: ', Date());
+
     if (err || checkApiError(response)) {
         console.warn(err);
 
@@ -147,7 +153,10 @@ async function getNextEvent(lp_url, lp_params) {
                 if (event.type === 'sq_question') {
                     get(event, 'question.answers', []).forEach(answer => {
                         answers.push(answer.text);
+                        opn(`https://www.google.com/search?q=${answer.text}`);
                     });
+
+                    runAfter(() => opn(`https://www.google.com/search?q=${question}`), [], 500);
 
                 } else {
                     get(event, 'question.answers', []).forEach(answer => {
