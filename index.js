@@ -26,6 +26,8 @@ const opn = require('opn');
 const checkApiError = require('./helpers/checkApiError');
 const runAfter = require('./helpers/runAfter');
 const processTimestamp = require('./helpers/processTimestamp');
+const localeFixer = require('./helpers/localeFixer');
+
 // --- //
 
 async function getStart() {
@@ -146,14 +148,16 @@ async function getNextEvent(lp_url, lp_params) {
 
             // take question ->
             if (event.type === 'sq_question' || event.type === 'sq_question_answers_right') {
-                const question = get(event, 'question.text', '');
+                const question = localeFixer(get(event, 'question.text', ''));
                 const number = get(event, 'question.number', '');
                 const answers = [];
 
                 if (event.type === 'sq_question') {
                     get(event, 'question.answers', []).forEach(answer => {
-                        answers.push(answer.text);
-                        opn(`https://www.google.com/search?q=${answer.text}`);
+                        const answerText = localeFixer(answer.text);
+
+                        answers.push(answerText);
+                        opn(`https://www.google.com/search?q=${answerText}`);
                     });
 
                     runAfter(() => opn(`https://www.google.com/search?q=${question}`), [], 500);
