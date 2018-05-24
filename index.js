@@ -1,19 +1,21 @@
-const dotenv = require('dotenv').config();
+const config = require('nconf')
+    .env()
+    .file({file: './config/dev.json'});
+
+console.log(
+    config.get('http:headers')
+);
 
 // request
 const request = require('request-promise-native');
-const req = request.defaults({
-    headers: {
-        'User-Agent': process.env.ua,
-    },
-});
+const req = request.defaults(config.get('http:headers'));
 const to = require('await-to-js').to;
 const url = require('url');
 
 // moment
 const moment = require('moment-timezone');
-moment.tz.setDefault('Europe/Minsk');
-moment.locale('ru');
+moment.tz.setDefault(config.get('system.timezone'));
+moment.locale(config.get('system.locale'));
 
 // lodash
 const get = require('lodash/get');
@@ -29,21 +31,21 @@ const processTimestamp = require('./helpers/processTimestamp');
 const localeFixer = require('./helpers/localeFixer');
 
 // --- //
+const api = config.get('api');
 
 async function getStart() {
     const [err, response] = await to(req.post({
-        url: process.env.URL_API_START,
+        url: url.resolve(api.url.host, api.url.start),
         json: true,
 
     }).form({
-        build_ver: process.env.API_BUILD_VER,
-        need_leaderboard: process.env.API_NEED_LEADERBOARD,
-        func_v: process.env.API_FUNC_V,
-        access_token: process.env.API_ACCESS_TOKEN,
-        v: process.env.API_V,
-        lang: process.env.API_LANG,
-        https: process.env.API_HTTPS,
-
+        build_ver:        api.build_ver,
+        need_leaderboard: api.need_leaderboard,
+        func_v:           api.func_v,
+        access_token:     api.access_token,
+        v:                api.v,
+        lang:             api.lang,
+        https:            api.https,
     }));
 
     if (err || checkApiError(response)) {
@@ -99,16 +101,16 @@ async function gameWaiter() {
 
 async function getLongPollUrl(videoOwner, videoId) {
     const [err, response] = await to(req.post({
-        url: process.env.URL_API_GET_LP,
+        url: url.resolve(api.url.host, api.url.get_lp),
         json: true,
 
     }).form({
-        video_id: videoId,
-        owner_id: videoOwner,
-        access_token: process.env.API_ACCESS_TOKEN,
-        v: process.env.API_V,
-        lang: process.env.API_LANG,
-        https: process.env.API_HTTPS,
+        video_id:     videoId,
+        owner_id:     videoOwner,
+        access_token: api.access_token,
+        v:            api.v,
+        lang:         api.lang,
+        https:        api.https,
     }));
 
     if (err || checkApiError(response)) {

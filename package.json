@@ -1,16 +1,15 @@
 {
-  "name": "lp_client",
-  "version": "0.0.1",
-  "description": "N/A",
+  "name": "quulaq_lp_client",
+  "version": "0.0.3",
+  "description": "Longpoll client",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "fix": "shx chmod +x node_modules/opn/xdg-open",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "fix": "shx chmod +x node_modules/opn/xdg-open"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Holovin/lp_client.git"
+    "url": "git+https://github.com/Holovin/quulaq_lp_client"
   },
   "keywords": [
     "LP"
@@ -18,15 +17,15 @@
   "author": "Alexander Holovin",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Holovin/lp_client/issues"
+    "url": "https://github.com/Holovin/quulaq_lp_client/issues"
   },
-  "homepage": "https://github.com/Holovin/lp_client#readme",
+  "homepage": "https://github.com/Holovin/quulaq_lp_client#readme",
   "dependencies": {
     "await-to-js": "^2.0.1",
-    "dotenv": "^5.0.1",
     "lodash": "^4.17.5",
     "moment": "^2.22.1",
     "moment-timezone": "^0.5.15",
+    "nconf": "^0.10.0",
     "opn": "^5.3.0",
     "request": "^2.85.0",
     "request-promise-native": "^1.0.5",
