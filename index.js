@@ -2,10 +2,6 @@ const config = require('nconf')
     .env()
     .file({file: './config/dev.json'});
 
-console.log(
-    config.get('http:headers')
-);
-
 // request
 const request = require('request-promise-native');
 const req = request.defaults(config.get('http:headers'));
@@ -39,13 +35,13 @@ async function getStart() {
         json: true,
 
     }).form({
-        build_ver:        api.build_ver,
-        need_leaderboard: api.need_leaderboard,
-        func_v:           api.func_v,
-        access_token:     api.access_token,
-        v:                api.v,
-        lang:             api.lang,
-        https:            api.https,
+        build_ver:        api.params.build_ver,
+        need_leaderboard: api.params.need_leaderboard,
+        func_v:           api.params.func_v,
+        access_token:     api.params.access_token,
+        v:                api.params.v,
+        lang:             api.params.lang,
+        https:            api.params.https,
     }));
 
     if (err || checkApiError(response)) {
@@ -107,10 +103,10 @@ async function getLongPollUrl(videoOwner, videoId) {
     }).form({
         video_id:     videoId,
         owner_id:     videoOwner,
-        access_token: api.access_token,
-        v:            api.v,
-        lang:         api.lang,
-        https:        api.https,
+        access_token: api.params.access_token,
+        v:            api.params.v,
+        lang:         api.params.lang,
+        https:        api.params.https,
     }));
 
     if (err || checkApiError(response)) {
