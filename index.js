@@ -75,9 +75,14 @@ async function getStart() {
 // Core function
 async function gameWaiter() {
     const status = await getStart();
-    log.info(`Game status: ' ${JSON.stringify(status)}`);
+    log.info(`Game status: ${JSON.stringify(status)}`);
 
     // started!
+    if (!status) {
+        log.error(`EMPTY game status (seems wrong token)`);
+        return;
+    }
+
     if (status.gameStatus === 'started') {
         const lp_url_raw = await getLongPollUrl(status.videoOwner, status.videoId);
         const url_params = url.parse(lp_url_raw, true);
@@ -100,7 +105,7 @@ async function gameWaiter() {
 
     } else {
         // something wrong?
-        log.error(`Unknown game status >>> ${status.gameStatus}`);
+        log.error(`Unknown game status >>> ${JSON.stringify(status)}`);
     }
 }
 

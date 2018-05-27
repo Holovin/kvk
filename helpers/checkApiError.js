@@ -22,13 +22,13 @@ function checkApiError(response) {
 
     // api errors
     if (get(response, 'error.error_code')) {
-        log.warn(`[API] ${response.error}`);
+        log.error(`[API] ${JSON.stringify(response.error)}`);
         return true;
     }
 
     // long poll errors
     if (get(response, 'failed')) {
-        log.warn(`[API] ${errCodes[response.failed]}`);
+        log.error(`[API] ${errCodes[response.failed]}`);
         return true;
     }
 
