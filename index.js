@@ -167,11 +167,31 @@ async function getNextEvent(lp_url, lp_params) {
                         const answerText = localeFixer(answer.text);
 
                         answers.push(answerText);
-                        opn(`https://www.google.com/search?q=${answerText}`);
-                        opn(`https://yandex.com/search/?text=${answerText}`);
+
+                        // fix ULTRA HARD QUESTIONS
+                        if (answerText.includes('/')) {
+                            log.warn('Try split answers!');
+
+                            const splitAnswers = answerText.split('/');
+
+                            splitAnswers.forEach(splitAnswer => {
+                                log.debug(`Open SPLIT answers in browser: [${splitAnswer}]`);
+                                opn(`https://www.google.com/search?q=${splitAnswer}`);
+                            });
+
+                        } else {
+                            log.debug(`Open answers in browser: [${answerText}]`);
+                            opn(`https://www.google.com/search?q=${answerText}`);
+                        }
                     });
 
-                    runAfter(() => opn(`https://www.google.com/search?q=${question}`), [], 500);
+                    runAfter(() => {
+                        log.debug(`Open question in browsers: [${question}]`);
+                        opn(`https://www.google.com/search?q=${question}`);
+                        opn(`https://www.google.com/search?q=${question} ${answers.join(' ')}`);
+
+                        opn(`https://yandex.com/search/?text=${question}`);
+                    }, [], 500);
 
                 } else {
                     get(event, 'question.answers', []).forEach(answer => {
