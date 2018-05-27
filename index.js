@@ -1,19 +1,19 @@
-const dotenv = require('dotenv').config();
+const config = require('nconf')
+    .env()
+    .file({file: './config/dev.json'});
+
+const log = require('./helpers/logger');
 
 // request
 const request = require('request-promise-native');
-const req = request.defaults({
-    headers: {
-        'User-Agent': process.env.ua,
-    },
-});
+const req = request.defaults(config.get('http:headers'));
 const to = require('await-to-js').to;
 const url = require('url');
 
 // moment
 const moment = require('moment-timezone');
-moment.tz.setDefault('Europe/Minsk');
-moment.locale('ru');
+moment.tz.setDefault(config.get('system.timezone'));
+moment.locale(config.get('system.locale'));
 
 // lodash
 const get = require('lodash/get');
@@ -29,27 +29,31 @@ const processTimestamp = require('./helpers/processTimestamp');
 const localeFixer = require('./helpers/localeFixer');
 
 // --- //
+const api = config.get('api');
 
 async function getStart() {
+    log.debug('Try get start link...');
+
     const [err, response] = await to(req.post({
-        url: process.env.URL_API_START,
+        url: url.resolve(api.url.host, api.url.start),
         json: true,
-
     }).form({
-        build_ver: process.env.API_BUILD_VER,
-        need_leaderboard: process.env.API_NEED_LEADERBOARD,
-        func_v: process.env.API_FUNC_V,
-        access_token: process.env.API_ACCESS_TOKEN,
-        v: process.env.API_V,
-        lang: process.env.API_LANG,
-        https: process.env.API_HTTPS,
-
+        build_ver:        api.params.build_ver,
+        need_leaderboard: api.params.need_leaderboard,
+        func_v:           api.params.func_v,
+        access_token:     api.params.access_token,
+        v:                api.params.v,
+        lang:             api.params.lang,
+        https:            api.params.https,
     }));
 
     if (err || checkApiError(response)) {
-        console.warn(err);
+        log.error(`Cant get start link!`);
+        log.debug(`Err: ${JSON.stringify(err)}`);
         return;
     }
+
+    log.debug('Get start link >>> ok');
 
     return {
         gameId: get(response, 'response.game_info.game.game_id', ''),
@@ -64,13 +68,14 @@ async function getStart() {
 
 // Init
 (async () => {
+    log.info('-- STARTED --');
     await gameWaiter();
 })();
 
 // Core function
 async function gameWaiter() {
     const status = await getStart();
-    console.warn(`WAIT: `, status);
+    log.info(`Game status: ' ${JSON.stringify(status)}`);
 
     // started!
     if (status.gameStatus === 'started') {
@@ -82,6 +87,7 @@ async function gameWaiter() {
 
         // [https://....?] part
         const lp_url = `${url_params.protocol}//${url_params.host}${url_params.pathname}`;
+        log.info(`Game stated, lp link >>> ${lp_url}`);
 
         if (lp_url) {
             await getNextEvent(lp_url, lp_params);
@@ -89,35 +95,38 @@ async function gameWaiter() {
 
     } else if (status.gameStatus === 'planned') {
         // do next
+        log.info(`Wait...`);
         await runAfter(gameWaiter, [], 5000);
 
     } else {
         // something wrong?
-        console.warn(`Unknown game status >>> ${status.gameStatus}`);
+        log.error(`Unknown game status >>> ${status.gameStatus}`);
     }
 }
 
 async function getLongPollUrl(videoOwner, videoId) {
+    log.debug(`Try get lp url...`);
+
     const [err, response] = await to(req.post({
-        url: process.env.URL_API_GET_LP,
+        url: url.resolve(api.url.host, api.url.get_lp),
         json: true,
 
     }).form({
-        video_id: videoId,
-        owner_id: videoOwner,
-        access_token: process.env.API_ACCESS_TOKEN,
-        v: process.env.API_V,
-        lang: process.env.API_LANG,
-        https: process.env.API_HTTPS,
+        video_id:     videoId,
+        owner_id:     videoOwner,
+        access_token: api.params.access_token,
+        v:            api.params.v,
+        lang:         api.params.lang,
+        https:        api.params.https,
     }));
 
     if (err || checkApiError(response)) {
-        console.warn(err);
+        log.error(`Cant get lp url!`);
+        log.debug(`Err: ${JSON.stringify(err)}`);
         return;
     }
 
-    console.log(response);
-
+    log.debug(`LP answer: ${JSON.stringify(response)}`);
     return response.response.url;
 }
 
@@ -128,10 +137,11 @@ async function getNextEvent(lp_url, lp_params) {
         json: true,
     }));
 
-    console.log('Event: ', Date());
+    log.debug(`Event: ${response}`);
 
     if (err || checkApiError(response)) {
-        console.warn(err);
+        log.error(`Cant get event!`);
+        log.debug(`Err: ${JSON.stringify(err)}`);
 
         runAfter(getNextEvent, [lp_url, lp_params], 300);
         return false;
@@ -157,30 +167,49 @@ async function getNextEvent(lp_url, lp_params) {
                         const answerText = localeFixer(answer.text);
 
                         answers.push(answerText);
-                        opn(`https://www.google.com/search?q=${answerText}`);
+
+                        // fix ULTRA HARD QUESTIONS
+                        if (answerText.includes('/')) {
+                            log.warn('Try split answers!');
+
+                            const splitAnswers = answerText.split('/');
+
+                            splitAnswers.forEach(splitAnswer => {
+                                log.debug(`Open SPLIT answers in browser: [${splitAnswer}]`);
+                                opn(`https://www.google.com/search?q=${splitAnswer}`);
+                            });
+
+                        } else {
+                            log.debug(`Open answers in browser: [${answerText}]`);
+                            opn(`https://www.google.com/search?q=${answerText}`);
+                        }
                     });
 
-                    runAfter(() => opn(`https://www.google.com/search?q=${question}`), [], 500);
+                    runAfter(() => {
+                        log.debug(`Open question in browsers: [${question}]`);
+                        opn(`https://www.google.com/search?q=${question}`);
+                        opn(`https://www.google.com/search?q=${question} ${answers.join(' ')}`);
+
+                        opn(`https://yandex.com/search/?text=${question}`);
+                    }, [], 500);
 
                 } else {
                     get(event, 'question.answers', []).forEach(answer => {
                         if (get(event, 'question.right_answer_id') === answer.id) {
-                            answers.push(`>>> ${answer.text} (${answer.users_answered})`);
+                            answers.push(`[correct] ${answer.text} (${answer.users_answered})`);
                         } else {
                             answers.push(`${answer.text} (${answer.users_answered})`);
                         }
                     });
                 }
 
-                // TODO: rework after tests
-                console.log(`${number}. ${question}\n > ${answers.join('\n > ')}`);
+                log.info(`${number}. ${question}\n > ${answers.join('\n > ')}`);
             }
 
             // ITS TIME TO STOP, OKAY?
             if (event.type === 'sq_ed_game') {
-                console.warn('!!! Receive stop event !!!');
-                console.warn(event);
-
+                log.info(`-- STOP -- [${event}]`);
+                process.exit(0);
                 return true;
             }
         });

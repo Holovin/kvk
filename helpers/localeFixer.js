@@ -5,6 +5,8 @@
 //                  'abcdefghijklmnopqrstuvwxyz';
 // TODO: check letters: k?, m, n
 
+const log = require('./logger');
+
 const onlyCyrillic = 'БГДЁЖЗИЙЛПУФЦЧШЩЪЫЬЭЮЯ' + 'бвгдёжзийлмнптфцчшщъыьэюя';
 const onlyLatin = 'DFGIJLNQRSTUVWYZ' + 'bdfghijlmnqrstuvwz';
 
@@ -21,7 +23,7 @@ const replaceRules = {
 function localeFixer(str) {
     const words = str.split(' ');
 
-    return words.map(word => {
+    const afterWords = words.map(word => {
         const locale = detectLocale(word);
         const invertedLocale = getInvertedLocale(locale);
 
@@ -39,6 +41,12 @@ function localeFixer(str) {
                     : replaceRules[locale][position]
             }).join('');
     }).join(' ');
+
+    if (words !== afterWords) {
+        log.warn(`[LOCALE_FIX] Fix data from [${words}] to [${afterWords}]`);
+    }
+
+    return afterWords;
 }
 
 function detectLocale(word) {
