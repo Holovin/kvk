@@ -1,3 +1,4 @@
+const log = require('./logger');
 const get = require('lodash/get');
 
 const errCodes = {
@@ -21,16 +22,17 @@ function checkApiError(response) {
 
     // api errors
     if (get(response, 'error.error_code')) {
-        console.warn(response.error);
-
+        log.warn(`[API] ${response.error}`);
         return true;
     }
 
     // long poll errors
     if (get(response, 'failed')) {
-        console.warn(errCodes[response.failed]);
+        log.warn(`[API] ${errCodes[response.failed]}`);
+        return true;
     }
 
+    log.debug(`[API] No errors`);
     return false;
 }
 

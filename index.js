@@ -2,6 +2,8 @@ const config = require('nconf')
     .env()
     .file({file: './config/dev.json'});
 
+const log = require('./helpers/logger');
+
 // request
 const request = require('request-promise-native');
 const req = request.defaults(config.get('http:headers'));
@@ -30,10 +32,11 @@ const localeFixer = require('./helpers/localeFixer');
 const api = config.get('api');
 
 async function getStart() {
+    log.debug('Try get start link...');
+
     const [err, response] = await to(req.post({
         url: url.resolve(api.url.host, api.url.start),
         json: true,
-
     }).form({
         build_ver:        api.params.build_ver,
         need_leaderboard: api.params.need_leaderboard,
@@ -45,9 +48,12 @@ async function getStart() {
     }));
 
     if (err || checkApiError(response)) {
-        console.warn(err);
+        log.error(`Cant get start link!`);
+        log.debug(`Err: ${JSON.stringify(err)}`);
         return;
     }
+
+    log.debug('Get start link >>> ok');
 
     return {
         gameId: get(response, 'response.game_info.game.game_id', ''),
@@ -62,13 +68,14 @@ async function getStart() {
 
 // Init
 (async () => {
+    log.info('-- STARTED --');
     await gameWaiter();
 })();
 
 // Core function
 async function gameWaiter() {
     const status = await getStart();
-    console.warn(`WAIT: `, status);
+    log.info(`Game status: ' ${JSON.stringify(status)}`);
 
     // started!
     if (status.gameStatus === 'started') {
@@ -80,6 +87,7 @@ async function gameWaiter() {
 
         // [https://....?] part
         const lp_url = `${url_params.protocol}//${url_params.host}${url_params.pathname}`;
+        log.info(`Game stated, lp link >>> ${lp_url}`);
 
         if (lp_url) {
             await getNextEvent(lp_url, lp_params);
@@ -87,15 +95,18 @@ async function gameWaiter() {
 
     } else if (status.gameStatus === 'planned') {
         // do next
+        log.info(`Wait...`);
         await runAfter(gameWaiter, [], 5000);
 
     } else {
         // something wrong?
-        console.warn(`Unknown game status >>> ${status.gameStatus}`);
+        log.error(`Unknown game status >>> ${status.gameStatus}`);
     }
 }
 
 async function getLongPollUrl(videoOwner, videoId) {
+    log.debug(`Try get lp url...`);
+
     const [err, response] = await to(req.post({
         url: url.resolve(api.url.host, api.url.get_lp),
         json: true,
@@ -110,12 +121,12 @@ async function getLongPollUrl(videoOwner, videoId) {
     }));
 
     if (err || checkApiError(response)) {
-        console.warn(err);
+        log.error(`Cant get lp url!`);
+        log.debug(`Err: ${JSON.stringify(err)}`);
         return;
     }
 
-    console.log(response);
-
+    log.debug(`LP answer: ${JSON.stringify(response)}`);
     return response.response.url;
 }
 
@@ -126,10 +137,11 @@ async function getNextEvent(lp_url, lp_params) {
         json: true,
     }));
 
-    console.log('Event: ', Date());
+    log.debug(`Event: ${response}`);
 
     if (err || checkApiError(response)) {
-        console.warn(err);
+        log.error(`Cant get event!`);
+        log.debug(`Err: ${JSON.stringify(err)}`);
 
         runAfter(getNextEvent, [lp_url, lp_params], 300);
         return false;
@@ -163,22 +175,20 @@ async function getNextEvent(lp_url, lp_params) {
                 } else {
                     get(event, 'question.answers', []).forEach(answer => {
                         if (get(event, 'question.right_answer_id') === answer.id) {
-                            answers.push(`>>> ${answer.text} (${answer.users_answered})`);
+                            answers.push(`[correct] ${answer.text} (${answer.users_answered})`);
                         } else {
                             answers.push(`${answer.text} (${answer.users_answered})`);
                         }
                     });
                 }
 
-                // TODO: rework after tests
-                console.log(`${number}. ${question}\n > ${answers.join('\n > ')}`);
+                log.info(`${number}. ${question}\n > ${answers.join('\n > ')}`);
             }
 
             // ITS TIME TO STOP, OKAY?
             if (event.type === 'sq_ed_game') {
-                console.warn('!!! Receive stop event !!!');
-                console.warn(event);
-
+                log.info(`-- STOP -- [${event}]`);
+                process.exit(0);
                 return true;
             }
         });
