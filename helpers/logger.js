@@ -1,7 +1,7 @@
 const winston = require('winston');
 
 const loggerFormatter = winston.format.printf(info => {
-    return `${info.level.toUpperCase()} [${info.timestamp}] ${info.message}`;
+    return `${info.level.toUpperCase().padEnd(8)} [${info.timestamp}] ${info.message}`;
 });
 
 const log = winston.createLogger({
