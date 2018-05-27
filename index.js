@@ -168,6 +168,7 @@ async function getNextEvent(lp_url, lp_params) {
 
                         answers.push(answerText);
                         opn(`https://www.google.com/search?q=${answerText}`);
+                        opn(`https://yandex.com/search/?text=${answerText}`);
                     });
 
                     runAfter(() => opn(`https://www.google.com/search?q=${question}`), [], 500);
