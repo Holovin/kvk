@@ -1,3 +1,5 @@
+import 'source-map-support/register';
+
 import request from 'request-promise-native';
 
 import moment from 'moment-timezone';
@@ -54,7 +56,7 @@ class Client {
         } else if (status.gameStatus === 'planned') {
             // do next
             log.info(`Wait...`);
-            await runAfter(this.gameWaiter.bind(this), [], 5000);
+            await runAfter(this.gameWaiter, [], 5000);
 
         } else {
             // something wrong?

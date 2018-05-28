@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/Holovin/qoosb_lp#readme",
   "dependencies": {
-    "@types/request-promise": "^4.1.41",
     "await-to-js": "^2.0.1",
     "lodash": "^4.17.5",
     "moment": "^2.22.1",
@@ -46,6 +45,7 @@
     "@types/request-promise-native": "^1.0.14",
     "@types/winston": "^2.3.9",
     "shx": "^0.2.2",
+    "source-map-support": "^0.5.6",
     "ts-node": "^6.0.5",
     "tslint": "^5.10.0",
     "typescript": "^2.8.3"
