@@ -1,20 +1,20 @@
-const log = require('./logger');
-const get = require('lodash/get');
+import { log } from './logger';
+import { get } from 'lodash';
 
-const errCodes = {
+const errCodes: any = {
     1: 'History very outdated, try get new',
     2: 'Key old, get new',
     3: 'User error, get new key + ts',
     4: 'API version error',
 };
 
-function checkApiError(response) {
+export function checkApiError(response: any): boolean {
     // if queue
     if (Array.isArray(response)) {
         let errors = 0;
 
         response.forEach(item => {
-            errors += checkApiError(item);
+            errors += checkApiError(item) ? 1 : 0;
         });
 
         return errors > 0;
@@ -32,8 +32,6 @@ function checkApiError(response) {
         return true;
     }
 
-    log.debug(`[API] No errors`);
+    log.debug(`[API] No errors (${JSON.stringify(response)})`);
     return false;
 }
-
-module.exports = checkApiError;
