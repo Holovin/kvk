@@ -1,8 +1,11 @@
-# QUULAQ: LP Client
+# QOOSb: LP Client
 Run with `npm start`
 For fix linux permissions for `opn` use `npm run fix`
 
 #### Changelog
+##### v0.3 (28/05/2018)
+Move project to typescript
+
 ##### v0.2.2 (25/05/2018 - 28/05/2018)
 Dotenv replaced with nconf module
 Console.log replaced with winston logger
