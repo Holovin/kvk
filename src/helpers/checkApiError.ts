@@ -1,5 +1,6 @@
-import { log } from './logger';
+import { stringify } from 'circular-json';
 import { get } from 'lodash';
+import { log } from './logger';
 
 const errCodes: any = {
     1: 'History very outdated, try get new',
@@ -8,13 +9,23 @@ const errCodes: any = {
     4: 'API version error',
 };
 
-export function checkApiError(response: any): boolean {
+export function checkApiError(response: any, error: any = null): boolean {
+    if (error) {
+        log.error(`[API] Error field not empty: ${stringify(error)}`);
+        return true;
+    }
+
+    if (!response) {
+        log.error('[API] Empty response');
+        return true;
+    }
+
     // if queue
     if (Array.isArray(response)) {
         let errors = 0;
 
         response.forEach(item => {
-            errors += checkApiError(item) ? 1 : 0;
+            errors += checkApiError(item, null) ? 1 : 0;
         });
 
         return errors > 0;
@@ -22,7 +33,7 @@ export function checkApiError(response: any): boolean {
 
     // api errors
     if (get(response, 'error.error_code')) {
-        log.error(`[API] ${JSON.stringify(response.error)}`);
+        log.error(`[API] ${stringify(response.error)}`);
         return true;
     }
 
@@ -32,6 +43,6 @@ export function checkApiError(response: any): boolean {
         return true;
     }
 
-    log.debug(`[API] No errors (${JSON.stringify(response)})`);
+    log.debug(`[API] No errors (${stringify(response)})`);
     return false;
 }

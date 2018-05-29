@@ -24,6 +24,7 @@
   "homepage": "https://github.com/Holovin/qoosb_lp#readme",
   "dependencies": {
     "await-to-js": "^2.0.1",
+    "circular-json": "^0.5.4",
     "lodash": "^4.17.5",
     "moment": "^2.22.1",
     "moment-timezone": "^0.5.15",
@@ -37,6 +38,7 @@
     "winston-daily-rotate-file": "^3.2.0"
   },
   "devDependencies": {
+    "@types/circular-json": "^0.4.0",
     "@types/lodash": "^4.14.109",
     "@types/moment-timezone": "^0.5.5",
     "@types/nconf": "0.0.37",

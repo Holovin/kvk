@@ -12,7 +12,7 @@ Console.log replaced with winston logger
 Some improvements for search (new yandex search, search question with answers, search split answers)
 
 ##### v0.2.1 (22/05/2018)
-Fix broken words with similar symbols in diffenert keyboard layouts
+Fix broken words with similar symbols in different keyboard layouts
 
 ##### v0.2 (25/04/2018)
 Automatic open google link with question
