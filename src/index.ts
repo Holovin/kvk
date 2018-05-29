@@ -11,9 +11,9 @@ import { to } from 'await-to-js';
 import { ParsedUrlQuery } from 'querystring';
 import { stringify } from 'circular-json';
 
-import { log, checkApiError, localeFixer, processTimestamp, runAfter } from './helpers';
+import { log, checkApiError, localeFixer, processTimestamp, wait } from './helpers';
 import { ConfigApiInterface, GameInitialDataInterface } from './interfaces';
-import { GameStatusEnum } from './enums';
+import { EventTypes, GameStatus } from './enums';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
@@ -32,18 +32,26 @@ class Client {
     public async run(): Promise<boolean> {
         let needStartListenEvents: boolean;
 
+        // TODO: error handling
         // wait game
         do {
-             needStartListenEvents = await runAfter<boolean>(this.getGameData.bind(this), [], 5000);
+            [needStartListenEvents] = await Promise.all([
+                this.getGameData(),
+                wait(5000)
+            ]);
+
         } while (!needStartListenEvents);
 
-        //
-        let gameEnded: boolean;
+        let needNext: boolean;
 
         // get events
         do {
-            gameEnded = await this.getNextEvent();
-        } while (!gameEnded);
+            [needNext] = await Promise.all([
+                this.getNextEvent(),
+                wait(100)
+            ]);
+
+        } while (needNext);
 
         return false;
     }
@@ -58,7 +66,7 @@ class Client {
         log.info(`Game #${game.gameId}, status: ${game.gameStatus}, time: ${game.startTime}`);
 
         switch (game.gameStatus) {
-            case GameStatusEnum.STARTED: {
+            case GameStatus.STARTED: {
                 const [error, lpUrlRaw] = await to(this.getLongPollUrl(game.videoOwner, game.videoId));
                 const urlParams = parse(lpUrlRaw, true);
 
@@ -75,7 +83,7 @@ class Client {
                 return true;
             }
 
-            case GameStatusEnum.PLANNED: {
+            case GameStatus.PLANNED: {
                 return false;
             }
 
@@ -169,12 +177,12 @@ class Client {
             const event = JSON.parse(trimEnd(rawEvent, '<!>0'));
 
             // take question ->
-            if (event.type === 'sq_question' || event.type === 'sq_question_answers_right') {
+            if (event.type === EventTypes.QUESTION_START || event.type === EventTypes.QUESTION_END) {
                 const question = localeFixer(get(event, 'question.text', ''));
                 const number = get(event, 'question.number', '');
-                const answers: any = [];
+                const answers: string[] = [];
 
-                if (event.type === 'sq_question') {
+                if (event.type === EventTypes.QUESTION_START) {
                     get(event, 'question.answers', []).forEach(async (answer: any) => {
                         const answerText = localeFixer(answer.text);
 
@@ -197,11 +205,13 @@ class Client {
                         }
                     });
 
-                    await runAfter(async () => {
-                        log.debug(`Open question in browsers: [${question}]`);
-                        await opn(`https://www.google.com/search?q=${question}`);
-                        await opn(`https://yandex.com/search/?text=${question}`);
-                    }, [], 100);
+                    log.debug(`Open question in browsers: [${question}]`);
+
+                    await Promise.all([
+                        opn(`https://www.google.com/search?q=${question}`),
+                        opn(`https://yandex.com/search/?text=${question}`),
+                        wait(100),
+                    ]);
 
                 } else {
                     get(event, 'question.answers', []).forEach((answer: any) => {
@@ -217,7 +227,7 @@ class Client {
             }
 
             // ITS TIME TO STOP, OKAY?
-            if (event.type === 'sq_ed_game') {
+            if (event.type === EventTypes.GAME_END) {
                 log.info(`-- STOP -- `);
                 return false;
             }
@@ -233,6 +243,4 @@ class Client {
 })();
 
 // TODO:
-// * remove bind
 // * create interfaces for 'any' replace
-// * rework lp logic

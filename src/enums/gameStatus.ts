@@ -1,4 +1,4 @@
-export enum GameStatusEnum {
+export enum GameStatus {
     STARTED = 'started',
     PLANNED = 'planned',
 }

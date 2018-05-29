@@ -1,1 +1,2 @@
-export { GameStatusEnum } from './gameStatus.enum';
+export { GameStatus } from './gameStatus';
+export { EventTypes } from './eventTypes';
