@@ -13,7 +13,7 @@ import { stringify } from 'circular-json';
 
 import { log, checkApiError, localeFixer, processTimestamp, wait } from './helpers';
 import { ConfigApiInterface, GameInitialDataInterface } from './interfaces';
-import { EventTypes, GameStatus } from './enums';
+import { EventType, GameStatus } from './enums';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
@@ -177,12 +177,12 @@ class Client {
             const event = JSON.parse(trimEnd(rawEvent, '<!>0'));
 
             // take question ->
-            if (event.type === EventTypes.QUESTION_START || event.type === EventTypes.QUESTION_END) {
+            if (event.type === EventType.QUESTION_START || event.type === EventType.QUESTION_END) {
                 const question = localeFixer(get(event, 'question.text', ''));
                 const number = get(event, 'question.number', '');
                 const answers: string[] = [];
 
-                if (event.type === EventTypes.QUESTION_START) {
+                if (event.type === EventType.QUESTION_START) {
                     get(event, 'question.answers', []).forEach(async (answer: any) => {
                         const answerText = localeFixer(answer.text);
 
@@ -196,12 +196,18 @@ class Client {
 
                             splitAnswers.forEach( async (splitAnswer: string) => {
                                 log.debug(`Open SPLIT answers in browser: [${splitAnswer}]`);
-                                await opn(`https://www.google.com/search?q=${splitAnswer}`);
+                                await Promise.all([
+                                    opn(`https://www.google.com/search?q=${splitAnswer}`),
+                                    wait(300),
+                                ]);
                             });
 
                         } else {
                             log.debug(`Open answers in browser: [${answerText}]`);
-                            await opn(`https://www.google.com/search?q=${answerText}`);
+                            await Promise.all([
+                                opn(`https://www.google.com/search?q=${answerText}`),
+                                wait(300),
+                            ]);
                         }
                     });
 
@@ -210,7 +216,6 @@ class Client {
                     await Promise.all([
                         opn(`https://www.google.com/search?q=${question}`),
                         opn(`https://yandex.com/search/?text=${question}`),
-                        wait(100),
                     ]);
 
                 } else {
@@ -227,7 +232,7 @@ class Client {
             }
 
             // ITS TIME TO STOP, OKAY?
-            if (event.type === EventTypes.GAME_END) {
+            if (event.type === EventType.GAME_END) {
                 log.info(`-- STOP -- `);
                 return false;
             }

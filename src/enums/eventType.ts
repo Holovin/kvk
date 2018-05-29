@@ -1,4 +1,4 @@
-export enum EventTypes {
+export enum EventType {
     COMMENT = 'video_comment_new',
     QUESTION_START = 'sq_question',
     QUESTION_END = 'sq_question_answers_right',

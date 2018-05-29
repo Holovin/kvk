@@ -1,6 +1,4 @@
-import {log} from "./logger";
-
-export { log } from './logger';
+import { log } from './logger';
 
 export function wait(timeout: number): Promise<void> {
     log.debug(`[WAIT] Start with ${timeout}`);
