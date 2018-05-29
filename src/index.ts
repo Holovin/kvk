@@ -1,4 +1,5 @@
 import 'source-map-support/register';
+import prettyError from 'pretty-error';
 
 import request from 'request-promise-native';
 import moment from 'moment-timezone';
@@ -19,10 +20,11 @@ import { EventType, GameStatus } from './enums';
 const config = nconf.env().file({file: './config/dev.json'});
 const req = request.defaults(config.get('http:headers'));
 
+// TODO: not work
 moment.tz.setDefault(config.get('system.timezone'));
 moment.locale(config.get('system.locale'));
 
-//
+prettyError.start();
 
 class Client {
     private api: ConfigApiInterface = config.get('api');
@@ -37,7 +39,7 @@ class Client {
         do {
             [needStartListenEvents] = await Promise.all([
                 this.getGameData(),
-                wait(5000)
+                wait(5000),
             ]);
 
         } while (!needStartListenEvents);
@@ -48,7 +50,7 @@ class Client {
         do {
             [needNext] = await Promise.all([
                 this.getNextEvent(),
-                wait(100)
+                wait(100),
             ]);
 
         } while (needNext);
@@ -67,11 +69,11 @@ class Client {
 
         switch (game.gameStatus) {
             case GameStatus.STARTED: {
-                const [error, lpUrlRaw] = await to(this.getLongPollUrl(game.videoOwner, game.videoId));
+                const [lpError, lpUrlRaw] = await to(this.getLongPollUrl(game.videoOwner, game.videoId));
                 const urlParams = parse(lpUrlRaw, true);
 
-                if (error || !lpUrlRaw) {
-                    log.error
+                if (checkApiError(lpUrlRaw, lpError)) {
+                    throw Error('GetGameData');
                 }
 
                 // [?param1=value1] part, need for increment ts_id
@@ -94,7 +96,7 @@ class Client {
     }
 
     private async getGameInitialData(): Promise<GameInitialDataInterface> {
-        const request = req.post({
+        const getStartRequest = req.post({
             url: resolve(this.api.url.host, this.api.url.start),
             json: true,
             form: {
@@ -105,10 +107,10 @@ class Client {
                 v:                  this.api.params.v,
                 lang:               this.api.params.lang,
                 https:              this.api.params.https,
-            }
+            },
         }).promise();
 
-        const [err, response] = await to(request);
+        const [err, response] = await to(getStartRequest);
 
         if (checkApiError(response, err)) {
             throw Error('GetStart error');
@@ -126,7 +128,7 @@ class Client {
     }
 
     private async getLongPollUrl(videoOwner: string, videoId: string): Promise<string> {
-        const request = req.post({
+        const lpRequest = req.post({
             url: resolve(this.api.url.host, this.api.url.get_lp),
             json: true,
             form: {
@@ -139,31 +141,31 @@ class Client {
             },
         }).promise();
 
-        const [err, response] = await to(request);
+        const [err, response] = await to(lpRequest);
 
         if (checkApiError(response, err)) {
             throw Error('GetLongPollUrl error');
         }
 
-        const lp_url = get(response, 'response.url', null);
+        const lpUrl = get(response, 'response.url', null);
 
-        if (!lp_url) {
+        if (!lpUrl) {
             log.error(`Cant get lp url! Error: ${stringify(err)}`);
             throw Error('getLongPollUrl error');
         }
 
         log.debug(`LP answer: ${JSON.stringify(response)}`);
-        return lp_url;
+        return lpUrl;
     }
 
-    async getNextEvent(): Promise<boolean> {
-        const request = req.get({
+    private async getNextEvent(): Promise<boolean> {
+        const nextRequest = req.get({
             url: this.lpUrl,
             qs: this.lpParams,
             json: true,
         }).promise();
 
-        const [error, response] = await to(request);
+        const [error, response] = await to(nextRequest);
 
         if (checkApiError(response, error) || !response.ts) {
             return true;

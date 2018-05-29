@@ -46,10 +46,12 @@
     "@types/opn": "^5.1.0",
     "@types/request-promise-native": "^1.0.14",
     "@types/winston": "^2.3.9",
+    "pretty-error": "^2.1.1",
     "shx": "^0.2.2",
     "source-map-support": "^0.5.6",
     "ts-node": "^6.0.5",
     "tslint": "^5.10.0",
+    "tslint-consistent-codestyle": "^1.13.0",
     "typescript": "^2.8.3"
   }
 }
