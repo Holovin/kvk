@@ -22,13 +22,7 @@ export function checkApiError(response: any, error: any = null): boolean {
 
     // if queue
     if (Array.isArray(response)) {
-        let errors = 0;
-
-        response.forEach(item => {
-            errors += checkApiError(item, null) ? 1 : 0;
-        });
-
-        return errors > 0;
+        return !!response.reduce((result, item) => result + Number(checkApiError(item)), 0);
     }
 
     // api errors
