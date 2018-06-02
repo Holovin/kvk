@@ -4,7 +4,6 @@ import prettyError from 'pretty-error';
 import request from 'request-promise-native';
 import moment from 'moment-timezone';
 import nconf from 'nconf';
-import opn from 'opn';
 
 import { resolve, parse } from 'url';
 import { get, trimEnd } from 'lodash';
@@ -12,7 +11,7 @@ import { to } from 'await-to-js';
 import { ParsedUrlQuery } from 'querystring';
 import { stringify } from 'circular-json';
 
-import { log, checkApiError, localeFixer, processTimestamp, wait } from './helpers';
+import { log, checkApiError, localeFixer, processTimestamp, wait, opn } from './helpers';
 import { ConfigApiInterface, GameInitialDataInterface } from './interfaces';
 import { EventType, GameStatus } from './enums';
 
@@ -198,23 +197,18 @@ class Client {
 
                             splitAnswers.forEach( async (splitAnswer: string) => {
                                 log.debug(`Open SPLIT answers in browser: [${splitAnswer}]`);
-                                await Promise.all([
-                                    opn(`https://www.google.com/search?q=${splitAnswer}`),
-                                    wait(300),
-                                ]);
+                                opn(`https://www.google.com/search?q=${splitAnswer}`);
                             });
 
                         } else {
                             log.debug(`Open answers in browser: [${answerText}]`);
-                            await Promise.all([
-                                opn(`https://www.google.com/search?q=${answerText}`),
-                                wait(300),
-                            ]);
+                            opn(`https://www.google.com/search?q=${answerText}`);
                         }
                     });
 
                     log.debug(`Open question in browsers: [${question}]`);
 
+                    await wait(400);
                     await Promise.all([
                         opn(`https://www.google.com/search?q=${question}`),
                         opn(`https://yandex.com/search/?text=${question}`),
