@@ -1,4 +1,4 @@
-export interface UserDtoInterface {
+export interface UserInterface {
     id: number;
     photo_50: string;
     photo_100: string;

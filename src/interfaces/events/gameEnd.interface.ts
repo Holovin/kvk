@@ -1,6 +1,6 @@
 import { EventType } from '../../enums';
-import { EventCommonDtoInterface } from './helpers/eventCommon.dto.interface';
+import { EventCommonInterface } from './helpers/eventCommon.interface';
 
-export interface GameEndInterface extends EventCommonDtoInterface {
+export interface GameEndInterface extends EventCommonInterface {
     type: EventType.GAME_END;
 }

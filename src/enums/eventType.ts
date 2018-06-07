@@ -5,4 +5,5 @@ export enum EventType {
     FRIEND_ANSWER = 'sq_friend_answer',
     WINNERS = 'sq_game_winners',
     GAME_END = 'sq_ed_game',
+    ADS_PROMO = 'sq_in_game_banner',
 }

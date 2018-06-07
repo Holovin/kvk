@@ -1,6 +1,6 @@
-import { EventCommonDtoInterface } from './helpers/eventCommon.dto.interface';
+import { EventCommonInterface } from './helpers/eventCommon.interface';
 
-export interface QuestionEndInterface extends EventCommonDtoInterface {
+export interface QuestionEndInterface extends EventCommonInterface {
     question: {
         text: string;
         answers: [

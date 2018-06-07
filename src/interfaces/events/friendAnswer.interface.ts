@@ -1,6 +1,6 @@
 import { EventType } from '../../enums';
 
-export interface FriendAnswerDtoInterface {
+export interface FriendAnswerInterface {
     type: EventType.FRIEND_ANSWER;
     game_id: number;
     user_id: number;

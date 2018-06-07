@@ -14,6 +14,11 @@ import { stringify } from 'circular-json';
 import { log, checkApiError, localeFixer, processTimestamp, wait, opn } from './helpers';
 import { ConfigApiInterface, GameInitialDataInterface } from './interfaces';
 import { EventType, GameStatus } from './enums';
+import { CommentInterface } from './interfaces/events/comment.interface';
+import { FriendAnswerInterface } from './interfaces/events/friendAnswer.interface';
+import { GameEndInterface } from './interfaces/events/gameEnd.interface';
+import { QuestionEndInterface } from './interfaces/events/questionEnd.interface';
+import { QuestionStartInterface } from './interfaces/events/questionStart.interface';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
@@ -157,6 +162,48 @@ class Client {
         return lpUrl;
     }
 
+    private async processQuestionStart(event: QuestionStartInterface): Promise<boolean> {
+        const questionText = localeFixer(event.question.text);
+        const number = event.question.number;
+        const answers: string[] = [];
+
+        event.question.answers.forEach(async answer => {
+            const answerText = localeFixer(answer.text);
+            answers.push(answerText);
+
+            log.debug(`Open answers in browser: [${answerText}]`);
+            opn(`https://www.google.com/search?q=${answerText}`);
+        });
+
+        log.debug(`Open question in browsers: [${event}]`);
+
+        await wait(400);
+        opn(`https://www.google.com/search?q=${event}`);
+        opn(`https://yandex.com/search/?text=${event}`);
+
+        log.info(`${number}. ${questionText}\n > ${answers.join('\n > ')}`);
+        return true;
+    }
+
+    private async processQuestionEnd(event: QuestionEndInterface): Promise<boolean> {
+        const questionText = localeFixer(event.question.text);
+        const number = event.question.number;
+        const answers: string[] = [];
+
+        event.question.answers.forEach(async answer => {
+            const answerText = localeFixer(answer.text);
+
+            const stringStatus = event.question.right_answer_id === answer.id
+                ? '\u{2705}'
+                : '\u{274C}';
+
+            answers.push(`${stringStatus} ${answerText} (${answer.users_answered})`);
+        });
+
+        log.info(`${number}. ${questionText}\n > ${answers.join('\n > ')}`);
+        return true;
+    }
+
     private async getNextEvent(): Promise<boolean> {
         const nextRequest = req.get({
             url: this.lpUrl,
@@ -174,63 +221,40 @@ class Client {
         this.lpParams.ts = response.ts;
 
         // wtf is <!>0?
-        response.events.forEach(async (rawEvent: any) => {
-            const event = JSON.parse(trimEnd(rawEvent, '<!>0'));
+        response.events.forEach(async (rawEvent: string) => {
+            const event: CommentInterface
+                | FriendAnswerInterface
+                | GameEndInterface
+                | QuestionStartInterface
+                | QuestionEndInterface
+                = JSON.parse(trimEnd(rawEvent, '<!>0'));
 
-            // take question ->
-            if (event.type === EventType.QUESTION_START || event.type === EventType.QUESTION_END) {
-                const question = localeFixer(get(event, 'question.text', ''));
-                const number = get(event, 'question.number', '');
-                const answers: string[] = [];
-
-                if (event.type === EventType.QUESTION_START) {
-                    get(event, 'question.answers', []).forEach(async (answer: any) => {
-                        const answerText = localeFixer(answer.text);
-
-                        answers.push(answerText);
-
-                        // fix ULTRA HARD QUESTIONS
-                        if (answerText.includes('/')) {
-                            log.warn('Try split answers!');
-
-                            const splitAnswers = answerText.split('/');
-
-                            splitAnswers.forEach( async (splitAnswer: string) => {
-                                log.debug(`Open SPLIT answers in browser: [${splitAnswer}]`);
-                                opn(`https://www.google.com/search?q=${splitAnswer}`);
-                            });
-
-                        } else {
-                            log.debug(`Open answers in browser: [${answerText}]`);
-                            opn(`https://www.google.com/search?q=${answerText}`);
-                        }
-                    });
-
-                    log.debug(`Open question in browsers: [${question}]`);
-
-                    await wait(400);
-                    await Promise.all([
-                        opn(`https://www.google.com/search?q=${question}`),
-                        opn(`https://yandex.com/search/?text=${question}`),
-                    ]);
-
-                } else {
-                    get(event, 'question.answers', []).forEach((answer: any) => {
-                        if (get(event, 'question.right_answer_id') === answer.id) {
-                            answers.push(`[correct] ${answer.text} (${answer.users_answered})`);
-                        } else {
-                            answers.push(`${answer.text} (${answer.users_answered})`);
-                        }
-                    });
+            switch (event.type) {
+                case EventType.COMMENT: {
+                    // TODO
+                    return true;
                 }
 
-                log.info(`${number}. ${question}\n > ${answers.join('\n > ')}`);
-            }
+                case EventType.QUESTION_START:
+                    return await this.processQuestionStart(event as QuestionStartInterface);
 
-            // ITS TIME TO STOP, OKAY?
-            if (event.type === EventType.GAME_END) {
-                log.info(`-- STOP -- `);
-                return false;
+                case EventType.QUESTION_END:
+                    return await this.processQuestionEnd(event as QuestionEndInterface);
+
+                case EventType.FRIEND_ANSWER:
+                    return true;
+
+                case EventType.GAME_END:
+                    // TODO
+                    return false;
+
+                case EventType.ADS_PROMO:
+                    // TODO
+                    return true;
+
+                default:
+                    log.warn(`Unknown event type! ${stringify(event)}`);
+                    return true;
             }
         });
 
@@ -242,6 +266,3 @@ class Client {
     const client = new Client();
     await client.run();
 })();
-
-// TODO:
-// * create interfaces for 'any' replace
