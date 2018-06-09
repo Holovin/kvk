@@ -1,5 +1,5 @@
 import { stringify } from 'circular-json';
-import { get } from 'lodash';
+import { get, isError } from 'lodash';
 import { log } from './logger';
 
 const errCodes: any = {
@@ -9,9 +9,14 @@ const errCodes: any = {
     4: 'API version error',
 };
 
-export function checkApiError(response: any, error: any = null): boolean {
+export function checkApiError(response: any, error: any | Error = null): boolean {
     if (error) {
-        log.error(`[API] Error field not empty: ${stringify(error)}`);
+        if (isError(error)) {
+            log.error(`[API] ${error.name}: [${error.message}]\n${error.stack}`);
+        } else {
+            log.error(`[API] Error: ${stringify(error)}`);
+        }
+
         return true;
     }
 
