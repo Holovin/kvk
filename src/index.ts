@@ -11,7 +11,6 @@ import { to } from 'await-to-js';
 import { ParsedUrlQuery } from 'querystring';
 import { stringify } from 'circular-json';
 
-import { log, checkApiError, localeFixer, processTimestamp, wait, opn } from './helpers';
 import { ConfigApiInterface, GameInitialDataInterface } from './interfaces';
 import { EventType, GameStatus } from './enums';
 import { CommentInterface } from './interfaces/events/comment.interface';
@@ -19,6 +18,13 @@ import { FriendAnswerInterface } from './interfaces/events/friendAnswer.interfac
 import { GameEndInterface } from './interfaces/events/gameEnd.interface';
 import { QuestionEndInterface } from './interfaces/events/questionEnd.interface';
 import { QuestionStartInterface } from './interfaces/events/questionStart.interface';
+import { GetStartInterface } from './interfaces/events/getStart.interface';
+import { checkApiError } from './helpers/checkApiError';
+import { log } from './helpers/logger';
+import { wait } from './helpers/wait';
+import { opnUrl as opn } from './helpers/opn';
+import { processTimestamp } from './helpers/processTimestamp';
+import { localeFixer } from './helpers/localeFixer';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
@@ -36,15 +42,19 @@ class Client {
     private lpParams: ParsedUrlQuery;
 
     public async run(): Promise<boolean> {
+        let lastError = null;
         let needStartListenEvents: boolean;
 
         // TODO: error handling
         // wait game
         do {
-            [needStartListenEvents] = await Promise.all([
-                this.getGameData(),
-                wait(5000),
-            ]);
+            [lastError, needStartListenEvents] = await to(this.getGameData());
+
+            if (checkApiError(true, lastError)) {
+                log.warn(`[!!!] Something wrong 1? ${lastError}`);
+            }
+
+            await wait(5000);
 
         } while (!needStartListenEvents);
 
@@ -52,10 +62,15 @@ class Client {
 
         // get events
         do {
-            [needNext] = await Promise.all([
-                this.getNextEvent(),
-                wait(100),
-            ]);
+            lastError = null;
+
+            [lastError, needNext] = await to(this.getNextEvent());
+
+            if (checkApiError(true, lastError)) {
+                log.warn(`[!!!] Something wrong 2? ${stringify(lastError)}`);
+            }
+
+            await wait(100);
 
         } while (needNext);
 
@@ -66,7 +81,7 @@ class Client {
         const [error, game] = await to<GameInitialDataInterface>(this.getGameInitialData());
 
         if (checkApiError(game, error)) {
-            throw Error('GetGameData');
+            throw error;
         }
 
         log.info(`Game #${game.gameId}, status: ${game.gameStatus}, time: ${game.startTime}`);
@@ -114,20 +129,22 @@ class Client {
             },
         }).promise();
 
-        const [err, response] = await to(getStartRequest);
+        const [error, response]: [any, GetStartInterface] = await to(getStartRequest);
 
-        if (checkApiError(response, err)) {
-            throw Error('GetStart error');
+        if (checkApiError(response, error)) {
+            throw error;
         }
 
+        const {response: {game_info: {game}, server_time}} = response;
+
         return {
-            gameId: get(response, 'response.game_info.game.game_id', ''),
-            gameStatus: get(response, 'response.game_info.game.status', ''),
-            startTime: processTimestamp(get(response, 'response.game_info.game.start_time', ''), true),
-            serverTime: processTimestamp(get(response, 'response.server_time', '')),
-            prize: get(response, 'response.game_info.game.prize', ''),
-            videoOwner: get(response, 'response.game_info.game.video_owner_id', ''),
-            videoId: get(response, 'response.game_info.game.video_id', ''),
+            gameId:     game.game_id.toString(),
+            gameStatus: game.status,
+            startTime:  game.start_time ? processTimestamp(game.start_time, true) : '',
+            serverTime: processTimestamp(server_time),
+            prize:      game.prize.toString(),
+            videoOwner: game.video_owner_id ? game.video_owner_id.toString() : '',
+            videoId:    game.video_id ? game.video_id.toString() : '',
         };
     }
 
@@ -145,16 +162,16 @@ class Client {
             },
         }).promise();
 
-        const [err, response] = await to(lpRequest);
+        const [error, response] = await to(lpRequest);
 
-        if (checkApiError(response, err)) {
-            throw Error('GetLongPollUrl error');
+        if (checkApiError(response, error)) {
+            throw error;
         }
 
         const lpUrl = get(response, 'response.url', null);
 
         if (!lpUrl) {
-            log.error(`Cant get lp url! Error: ${stringify(err)}`);
+            log.error(`Cant get lp url, but no error?`);
             throw Error('getLongPollUrl error');
         }
 
@@ -178,8 +195,8 @@ class Client {
         log.debug(`Open question in browsers: [${event}]`);
 
         await wait(400);
-        opn(`https://www.google.com/search?q=${event}`);
-        opn(`https://yandex.com/search/?text=${event}`);
+        opn(`https://yandex.com/search/?text=${questionText}`);
+        opn(`https://www.google.com/search?q=${questionText}`);
 
         log.info(`${number}. ${questionText}\n > ${answers.join('\n > ')}`);
         return true;
@@ -250,6 +267,10 @@ class Client {
 
                 case EventType.ADS_PROMO:
                     // TODO
+                    return true;
+
+                case EventType.WINNERS:
+                    // TODO:
                     return true;
 
                 default:

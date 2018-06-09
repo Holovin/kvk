@@ -9,7 +9,7 @@ export const log = createLogger({
     transports: [
         new transports.File({ filename: 'info.log', level: 'info' }),
         new transports.File({ filename: 'debug.log' }),
-        new transports.Console({ level: 'debug' }),
+        new transports.Console({ level: 'info' }),
     ],
     format: format.combine(
         format.timestamp({ format: 'YYYY/MM/DD HH:mm:ss' }),

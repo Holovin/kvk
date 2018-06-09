@@ -1,4 +1,4 @@
-import { EventCommonInterface } from './helpers/eventCommon.interface';
+import { EventCommonInterface } from '../helpers/eventCommon.interface';
 
 export interface QuestionStartInterface extends EventCommonInterface {
     question: {

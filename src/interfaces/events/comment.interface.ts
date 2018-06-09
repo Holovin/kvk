@@ -1,5 +1,5 @@
-import { EventCommonInterface } from './helpers/eventCommon.interface';
-import { UserInterface } from './helpers/user.interface';
+import { EventCommonInterface } from '../helpers/eventCommon.interface';
+import { UserInterface } from '../helpers/user.interface';
 
 export interface CommentInterface extends EventCommonInterface {
     comment: {

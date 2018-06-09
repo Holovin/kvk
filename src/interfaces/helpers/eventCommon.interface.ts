@@ -1,4 +1,4 @@
-import { EventType } from '../../../enums';
+import { EventType } from '../../enums';
 
 export interface EventCommonInterface {
     type: EventType;
