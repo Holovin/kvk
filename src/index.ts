@@ -196,7 +196,7 @@ class Client {
 
         await wait(400);
         opn(`https://yandex.com/search/?text=${questionText}`);
-        opn(`https://www.google.com/search?q=${questionText}`);
+        opn(`https://www.google.com/search?q=${questionText}&x-answers=${answers.join('|||')}`);
 
         log.info(`${number}. ${questionText}\n > ${answers.join('\n > ')}`);
         return true;
