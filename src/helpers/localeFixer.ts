@@ -1,26 +1,20 @@
-// const cyrillic = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ' +
-//                  'абвгдеёжзийклмнопрстуфхцчшщъыьэюя';
-//
-// const latin    = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
-//                  'abcdefghijklmnopqrstuvwxyz';
+import { log } from './logger';
+
 // TODO: check letters: k?, m, n
-
-const log = require('./logger');
-
 const onlyCyrillic = 'БГДЁЖЗИЙЛПУФЦЧШЩЪЫЬЭЮЯ' + 'бвгдёжзийлмнптфцчшщъыьэюя';
 const onlyLatin = 'DFGIJLNQRSTUVWYZ' + 'bdfghijlmnqrstuvwz';
 
-const locales = {
+const locales: any = {
     cyrillic: onlyCyrillic,
     latin: onlyLatin,
 };
 
-const replaceRules = {
+const replaceRules: any = {
     cyrillic: 'АВСЕНКМОРХасекорх',
     latin:    'ABCEHKMOPXacekopx',
 };
 
-function localeFixer(str) {
+export function localeFixer(str: string): string {
     const words = str.split(' ');
 
     const afterWords = words.map(word => {
@@ -42,14 +36,14 @@ function localeFixer(str) {
             }).join('');
     }).join(' ');
 
-    if (words !== afterWords) {
-        log.warn(`[LOCALE_FIX] Fix data from [${words}] to [${afterWords}]`);
+    if (str !== afterWords) {
+        log.warn(`[LOCALE_FIX] Fix data from [${str}] to [${afterWords}]`);
     }
 
     return afterWords;
 }
 
-function detectLocale(word) {
+function detectLocale(word: string): string {
     for (let k = 0; k < word.length; k++) {
         for (let i = 0, keys = Object.keys(locales); i < keys.length; i++) {
             const currentLocale = locales[keys[i]];
@@ -63,8 +57,6 @@ function detectLocale(word) {
     return null;
 }
 
-function getInvertedLocale(locale) {
+function getInvertedLocale(locale: string): string {
     return locale === 'cyrillic' ? 'latin' : 'cyrillic';
 }
-
-module.exports = localeFixer;
