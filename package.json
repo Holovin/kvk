@@ -4,9 +4,11 @@
   "description": "Longpoll part of QOOSb",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "start-client": "node dist/bin/client.js",
+    "start-server": "node dist/bin/server.js",
     "build": "tsc",
-    "go": "npm run build && npm run start",
+    "go-client": "npm run build && npm run start-client",
+    "go-server": "npm run build && npm run start-server",
     "fix-opn": "shx chmod +x node_modules/opn/xdg-open"
   },
   "repository": {
@@ -34,7 +36,7 @@
     "request-promise": "latest",
     "request-promise-native": "^1.0.5",
     "url": "^0.11.0",
-    "winston": "git://github.com/winstonjs/winston#master",
+    "winston": "^3.0.0",
     "winston-daily-rotate-file": "^3.2.0"
   },
   "devDependencies": {
@@ -46,6 +48,7 @@
     "@types/opn": "^5.1.0",
     "@types/request-promise-native": "^1.0.14",
     "@types/winston": "^2.3.9",
+    "express": "^4.16.3",
     "pretty-error": "^2.1.1",
     "shx": "^0.2.2",
     "source-map-support": "^0.5.6",

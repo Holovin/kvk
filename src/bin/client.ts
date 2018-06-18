@@ -2,7 +2,10 @@ import 'source-map-support/register';
 import prettyError from 'pretty-error';
 
 import request from 'request-promise-native';
-import moment from 'moment-timezone';
+
+import * as moment from 'moment-timezone';
+import 'moment/locale/ru';
+
 import nconf from 'nconf';
 
 import { resolve, parse } from 'url';
@@ -11,30 +14,28 @@ import { to } from 'await-to-js';
 import { ParsedUrlQuery } from 'querystring';
 import { stringify } from 'circular-json';
 
-import { ConfigApiInterface, GameInitialDataInterface } from './interfaces';
-import { EventType, GameStatus } from './enums';
-import { CommentInterface } from './interfaces/events/comment.interface';
-import { FriendAnswerInterface } from './interfaces/events/friendAnswer.interface';
-import { GameEndInterface } from './interfaces/events/gameEnd.interface';
-import { QuestionEndInterface } from './interfaces/events/questionEnd.interface';
-import { QuestionStartInterface } from './interfaces/events/questionStart.interface';
-import { GetStartInterface } from './interfaces/events/getStart.interface';
-import { checkApiError } from './helpers/checkApiError';
-import { log } from './helpers/logger';
-import { wait } from './helpers/wait';
-import { opnUrl as opn } from './helpers/opn';
-import { processTimestamp } from './helpers/processTimestamp';
-import { localeFixer } from './helpers/localeFixer';
+import { ConfigApiInterface, GameInitialDataInterface } from '../interfaces';
+import { EventType, GameStatus } from '../enums';
+import { CommentInterface } from '../interfaces/events/comment.interface';
+import { FriendAnswerInterface } from '../interfaces/events/friendAnswer.interface';
+import { GameEndInterface } from '../interfaces/events/gameEnd.interface';
+import { QuestionEndInterface } from '../interfaces/events/questionEnd.interface';
+import { QuestionStartInterface } from '../interfaces/events/questionStart.interface';
+import { GetStartInterface } from '../interfaces/events/getStart.interface';
+import { checkApiError } from '../helpers/checkApiError';
+import { log } from '../helpers/logger';
+import { wait } from '../helpers/wait';
+import { opnUrl as opn } from '../helpers/opn';
+import { processTimestamp } from '../helpers/processTimestamp';
+import { localeFixer } from '../helpers/localeFixer';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
 const req = request.defaults(config.get('http:headers'));
 
-// TODO: not work
 moment.tz.setDefault(config.get('system.timezone'));
-moment.locale(config.get('system.locale'));
-
 prettyError.start();
+// end configs
 
 class Client {
     private api: ConfigApiInterface = config.get('api');
