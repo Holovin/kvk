@@ -195,8 +195,13 @@ class Client {
         log.debug(`Open question in browsers: [${event}]`);
 
         await wait(400);
+
+        // TODO
+        const flagName = 'x-answers';
+        const sep = '|||';
+
         opn(`https://yandex.com/search/?text=${questionText}`);
-        opn(`https://www.google.com/search?q=${questionText}`);
+        opn(`https://www.google.com/search?q=${questionText}&${flagName}=${answers.join(sep)}`);
 
         log.info(`${number}. ${questionText}\n > ${answers.join('\n > ')}`);
         return true;
