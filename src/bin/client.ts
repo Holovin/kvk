@@ -201,7 +201,8 @@ class Client {
         const flagName = 'x-answers';
         const sep = '|||';
 
-        opn(`https://yandex.com/search/?text=${questionText}`);
+        // opn(`https://yandex.com/search/?text=${questionText}`);
+        opn(`https://www.google.com/search?q=${questionText} ${answers.join(' ')}&${flagName}=${answers.join(sep)}`);
         opn(`https://www.google.com/search?q=${questionText}&${flagName}=${answers.join(sep)}`);
 
         log.info(`${number}. ${questionText}\n > ${answers.join('\n > ')}`);
