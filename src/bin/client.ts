@@ -28,6 +28,7 @@ import { wait } from '../helpers/wait';
 import { opnUrl as opn } from '../helpers/opn';
 import { processTimestamp } from '../helpers/processTimestamp';
 import { localeFixer } from '../helpers/localeFixer';
+import { VideoGetInterface } from '../interfaces/api/video.get';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
@@ -41,6 +42,8 @@ class Client {
     private api: ConfigApiInterface = config.get('api');
     private lpUrl: string;
     private lpParams: ParsedUrlQuery;
+    private currentVideoOwner: string;
+    private currentVideoId: string;
 
     public async run(): Promise<boolean> {
         let lastError = null;
@@ -89,11 +92,11 @@ class Client {
 
         switch (game.gameStatus) {
             case GameStatus.STARTED: {
-                const [lpError, lpUrlRaw] = await to(this.getLongPollUrl(game.videoOwner, game.videoId));
+                const [lpError, lpUrlRaw] = await to(this.getLongPollUrl());
                 const urlParams = parse(lpUrlRaw, true);
 
                 if (checkApiError(lpUrlRaw, lpError)) {
-                    throw Error('GetGameData');
+                    throw Error('GetGameData 1');
                 }
 
                 // [?param1=value1] part, need for increment ts_id
@@ -101,6 +104,19 @@ class Client {
 
                 // [https://....?] part
                 this.lpUrl = `${urlParams.protocol}//${urlParams.host}${urlParams.pathname}`;
+
+                // for get HLS stream
+                this.currentVideoOwner = game.videoOwner;
+                this.currentVideoId = game.videoId;
+
+                const [videoError, videoHls] = await to(this.getVideo());
+
+                if (checkApiError(videoHls, videoError)) {
+                    throw Error('GetGameData 2');
+                }
+
+                // TODO
+                log.info(`HLS stream link: ${videoHls}`);
 
                 return true;
             }
@@ -113,6 +129,31 @@ class Client {
                 throw Error(`GetGameData - unknown state: ${game.gameStatus}`);
             }
         }
+    }
+
+    private async getVideo(): Promise<string> {
+        const getVideoHlsLink = req.post({
+            url: resolve(this.api.url.host, this.api.url.get_video),
+            json: true,
+            form: {
+                videos:          `${this.currentVideoOwner}_${this.currentVideoId}`,
+                owner_id:           this.currentVideoOwner,
+                func_v:             this.api.params.func_v,
+                extended:           true,
+                access_token:       this.api.params.access_token,
+                v:                  this.api.params.v,
+                lang:               this.api.params.lang,
+                https:              this.api.params.https,
+            },
+        }).promise();
+
+        const [error, response]: [any, VideoGetInterface] = await to(getVideoHlsLink);
+
+        if (checkApiError(response, error)) {
+            throw error;
+        }
+
+        return get(response.response, 'items[0].files.hls', '');
     }
 
     private async getGameInitialData(): Promise<GameInitialDataInterface> {
@@ -149,13 +190,13 @@ class Client {
         };
     }
 
-    private async getLongPollUrl(videoOwner: string, videoId: string): Promise<string> {
+    private async getLongPollUrl(): Promise<string> {
         const lpRequest = req.post({
             url: resolve(this.api.url.host, this.api.url.get_lp),
             json: true,
             form: {
-                video_id:     videoId,
-                owner_id:     videoOwner,
+                video_id:     this.currentVideoId,
+                owner_id:     this.currentVideoOwner,
                 access_token: this.api.params.access_token,
                 v:            this.api.params.v,
                 lang:         this.api.params.lang,

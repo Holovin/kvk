@@ -13,7 +13,7 @@ export interface GetStartInterface {
                 is_closed?: boolean,      // status: started
                 start_time?: number,      // status: planned
                 prize: number,
-                question_number: number,  // status: started
+                question_number?: number, // status: started
             },
             user: {
                 extra_lives: number,
@@ -34,7 +34,7 @@ export interface GetStartInterface {
             is_coin_promo_enabled: boolean,
             stats_disabled: false,
             is_log_enabled: false,
-            last_answer: {                // status: started
+            last_answer?: {                // status: started
                 question_id: number,
                 answer_id: number,
             },
