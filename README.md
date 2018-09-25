@@ -3,6 +3,10 @@ Run with `npm start`
 For fix linux permissions for `opn` use `npm run fix`
 
 #### Changelog
+##### v0.3.1 (25/09/2018)
+Shared lib for interfaces
+Video link stream
+
 ##### v0.3 (28/05/2018)
 Move project to typescript
 
