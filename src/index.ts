@@ -1,45 +1,50 @@
 import 'source-map-support/register';
 import prettyError from 'pretty-error';
-
 import request from 'request-promise-native';
-import moment from 'moment-timezone';
+import * as moment from 'moment-timezone';
+import 'moment/locale/ru';
 import nconf from 'nconf';
-
 import { resolve, parse } from 'url';
 import { get, trimEnd } from 'lodash';
 import { to } from 'await-to-js';
 import { ParsedUrlQuery } from 'querystring';
 import { stringify } from 'circular-json';
-
-import { ConfigApiInterface, GameInitialDataInterface } from './interfaces';
-import { EventType, GameStatus } from './enums';
-import { CommentInterface } from './interfaces/events/comment.interface';
-import { FriendAnswerInterface } from './interfaces/events/friendAnswer.interface';
-import { GameEndInterface } from './interfaces/events/gameEnd.interface';
-import { QuestionEndInterface } from './interfaces/events/questionEnd.interface';
-import { QuestionStartInterface } from './interfaces/events/questionStart.interface';
-import { GetStartInterface } from './interfaces/events/getStart.interface';
 import { checkApiError } from './helpers/checkApiError';
 import { log } from './helpers/logger';
 import { wait } from './helpers/wait';
 import { opnUrl as opn } from './helpers/opn';
 import { processTimestamp } from './helpers/processTimestamp';
 import { localeFixer } from './helpers/localeFixer';
+import {
+    CommentInterface,
+    DictionaryInterface,
+    FriendAnswerInterface,
+    GameEndInterface,
+    GameInitialDataInterface,
+    GetStartInterface,
+    QuestionEndInterface,
+    QuestionStartInterface,
+    VideoGetInterface,
+} from 'qoosb_shared/interfaces';
+import {
+    GameStatus,
+    EventType,
+} from 'qoosb_shared/enums';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
 const req = request.defaults(config.get('http:headers'));
 
-// TODO: not work
 moment.tz.setDefault(config.get('system.timezone'));
-moment.locale(config.get('system.locale'));
-
 prettyError.start();
+// end configs
 
 class Client {
-    private api: ConfigApiInterface = config.get('api');
+    private api: DictionaryInterface<any> = config.get('api');
     private lpUrl: string;
     private lpParams: ParsedUrlQuery;
+    private currentVideoOwner: string;
+    private currentVideoId: string;
 
     public async run(): Promise<boolean> {
         let lastError = null;
@@ -88,11 +93,15 @@ class Client {
 
         switch (game.gameStatus) {
             case GameStatus.STARTED: {
-                const [lpError, lpUrlRaw] = await to(this.getLongPollUrl(game.videoOwner, game.videoId));
+                // for get HLS stream
+                this.currentVideoOwner = game.videoOwner;
+                this.currentVideoId = game.videoId;
+
+                const [lpError, lpUrlRaw] = await to(this.getLongPollUrl());
                 const urlParams = parse(lpUrlRaw, true);
 
                 if (checkApiError(lpUrlRaw, lpError)) {
-                    throw Error('GetGameData');
+                    throw Error('GetGameData 1');
                 }
 
                 // [?param1=value1] part, need for increment ts_id
@@ -100,6 +109,15 @@ class Client {
 
                 // [https://....?] part
                 this.lpUrl = `${urlParams.protocol}//${urlParams.host}${urlParams.pathname}`;
+
+                const [videoError, videoHls] = await to(this.getVideo());
+
+                if (checkApiError(videoHls, videoError)) {
+                    throw Error('GetGameData 2');
+                }
+
+                // TODO
+                log.info(`HLS stream link: ${videoHls}`);
 
                 return true;
             }
@@ -112,6 +130,31 @@ class Client {
                 throw Error(`GetGameData - unknown state: ${game.gameStatus}`);
             }
         }
+    }
+
+    private async getVideo(): Promise<string> {
+        const getVideoHlsLink = req.post({
+            url: resolve(this.api.url.host, this.api.url.get_video),
+            json: true,
+            form: {
+                videos:          `${this.currentVideoOwner}_${this.currentVideoId}`,
+                owner_id:           this.currentVideoOwner,
+                func_v:             this.api.params.func_v,
+                extended:           true,
+                access_token:       this.api.params.access_token,
+                v:                  this.api.params.v,
+                lang:               this.api.params.lang,
+                https:              this.api.params.https,
+            },
+        }).promise();
+
+        const [error, response]: [any, VideoGetInterface] = await to(getVideoHlsLink);
+
+        if (checkApiError(response, error)) {
+            throw error;
+        }
+
+        return get(response.response, 'items[0].files.hls', '');
     }
 
     private async getGameInitialData(): Promise<GameInitialDataInterface> {
@@ -148,13 +191,13 @@ class Client {
         };
     }
 
-    private async getLongPollUrl(videoOwner: string, videoId: string): Promise<string> {
+    private async getLongPollUrl(): Promise<string> {
         const lpRequest = req.post({
             url: resolve(this.api.url.host, this.api.url.get_lp),
             json: true,
             form: {
-                video_id:     videoId,
-                owner_id:     videoOwner,
+                video_id:     this.currentVideoId,
+                owner_id:     this.currentVideoOwner,
                 access_token: this.api.params.access_token,
                 v:            this.api.params.v,
                 lang:         this.api.params.lang,
@@ -200,7 +243,8 @@ class Client {
         const flagName = 'x-answers';
         const sep = '|||';
 
-        opn(`https://yandex.com/search/?text=${questionText}`);
+        // opn(`https://yandex.com/search/?text=${questionText}`);
+        opn(`https://www.google.com/search?q=${questionText} ${answers.join(' ')}&${flagName}=${answers.join(sep)}`);
         opn(`https://www.google.com/search?q=${questionText}&${flagName}=${answers.join(sep)}`);
 
         log.info(`${number}. ${questionText}\n > ${answers.join('\n > ')}`);
