@@ -1,6 +1,6 @@
-const moment = require('moment-timezone');
+import moment from 'moment-timezone';
 
-function processTimestamp(timestampInput, addFrom = false) {
+export function processTimestamp(timestampInput: any, addFrom = false): string {
     const timestamp = timestampInput * 1000;
     const timestampStr = `${moment(timestamp).format('DD/MM/YYYY HH:mm:ss')}`;
 
@@ -10,5 +10,3 @@ function processTimestamp(timestampInput, addFrom = false) {
 
     return timestampStr;
 }
-
-module.exports = processTimestamp;
