@@ -33,7 +33,6 @@
     "nconf": "^0.10.0",
     "opn": "^5.3.0",
     "request": "^2.85.0",
-    "request-promise": "latest",
     "request-promise-native": "^1.0.5",
     "url": "^0.11.0",
     "winston": "^3.0.0",
@@ -41,6 +40,7 @@
   },
   "devDependencies": {
     "@types/circular-json": "^0.4.0",
+    "@types/express": "^4.16.0",
     "@types/lodash": "^4.14.109",
     "@types/moment-timezone": "^0.5.5",
     "@types/nconf": "0.0.37",
@@ -50,11 +50,16 @@
     "@types/winston": "^2.3.9",
     "express": "^4.16.3",
     "pretty-error": "^2.1.1",
+    "qoosb_shared": "github:Holovin/qoosb_shared",
     "shx": "^0.2.2",
     "source-map-support": "^0.5.6",
     "ts-node": "^6.0.5",
     "tslint": "^5.10.0",
     "tslint-consistent-codestyle": "^1.13.0",
     "typescript": "^2.8.3"
+  },
+  "engines": {
+    "node": ">=10.0.0",
+    "npm": ">=6.0.0"
   }
 }

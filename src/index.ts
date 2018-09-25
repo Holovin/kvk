@@ -1,34 +1,35 @@
 import 'source-map-support/register';
 import prettyError from 'pretty-error';
-
 import request from 'request-promise-native';
-
 import * as moment from 'moment-timezone';
 import 'moment/locale/ru';
-
 import nconf from 'nconf';
-
 import { resolve, parse } from 'url';
 import { get, trimEnd } from 'lodash';
 import { to } from 'await-to-js';
 import { ParsedUrlQuery } from 'querystring';
 import { stringify } from 'circular-json';
-
-import { ConfigApiInterface, GameInitialDataInterface } from '../interfaces';
-import { EventType, GameStatus } from '../enums';
-import { CommentInterface } from '../interfaces/events/comment.interface';
-import { FriendAnswerInterface } from '../interfaces/events/friendAnswer.interface';
-import { GameEndInterface } from '../interfaces/events/gameEnd.interface';
-import { QuestionEndInterface } from '../interfaces/events/questionEnd.interface';
-import { QuestionStartInterface } from '../interfaces/events/questionStart.interface';
-import { GetStartInterface } from '../interfaces/events/getStart.interface';
-import { checkApiError } from '../helpers/checkApiError';
-import { log } from '../helpers/logger';
-import { wait } from '../helpers/wait';
-import { opnUrl as opn } from '../helpers/opn';
-import { processTimestamp } from '../helpers/processTimestamp';
-import { localeFixer } from '../helpers/localeFixer';
-import { VideoGetInterface } from '../interfaces/api/video.get';
+import { checkApiError } from './helpers/checkApiError';
+import { log } from './helpers/logger';
+import { wait } from './helpers/wait';
+import { opnUrl as opn } from './helpers/opn';
+import { processTimestamp } from './helpers/processTimestamp';
+import { localeFixer } from './helpers/localeFixer';
+import {
+    CommentInterface,
+    DictionaryInterface,
+    FriendAnswerInterface,
+    GameEndInterface,
+    GameInitialDataInterface,
+    GetStartInterface,
+    QuestionEndInterface,
+    QuestionStartInterface,
+    VideoGetInterface,
+} from 'qoosb_shared/interfaces';
+import {
+    GameStatus,
+    EventType,
+} from 'qoosb_shared/enums';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
@@ -39,7 +40,7 @@ prettyError.start();
 // end configs
 
 class Client {
-    private api: ConfigApiInterface = config.get('api');
+    private api: DictionaryInterface<any> = config.get('api');
     private lpUrl: string;
     private lpParams: ParsedUrlQuery;
     private currentVideoOwner: string;
@@ -92,6 +93,10 @@ class Client {
 
         switch (game.gameStatus) {
             case GameStatus.STARTED: {
+                // for get HLS stream
+                this.currentVideoOwner = game.videoOwner;
+                this.currentVideoId = game.videoId;
+
                 const [lpError, lpUrlRaw] = await to(this.getLongPollUrl());
                 const urlParams = parse(lpUrlRaw, true);
 
@@ -104,10 +109,6 @@ class Client {
 
                 // [https://....?] part
                 this.lpUrl = `${urlParams.protocol}//${urlParams.host}${urlParams.pathname}`;
-
-                // for get HLS stream
-                this.currentVideoOwner = game.videoOwner;
-                this.currentVideoId = game.videoId;
 
                 const [videoError, videoHls] = await to(this.getVideo());
 
