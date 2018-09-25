@@ -1,14 +1,12 @@
 {
   "name": "qoosb_lp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Longpoll part of QOOSb",
   "main": "index.js",
   "scripts": {
-    "start-client": "node dist/bin/client.js",
-    "start-server": "node dist/bin/server.js",
+    "start": "node dist/bin/client.js",
     "build": "tsc",
-    "go-client": "npm run build && npm run start-client",
-    "go-server": "npm run build && npm run start-server",
+    "go": "npm run build && npm run start",
     "fix-opn": "shx chmod +x node_modules/opn/xdg-open"
   },
   "repository": {
