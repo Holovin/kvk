@@ -1,4 +1,4 @@
-import { EventType } from '../../enums';
+import { EventType } from 'qoosb_shared';
 
 export interface EventCommonInterface {
     type: EventType;

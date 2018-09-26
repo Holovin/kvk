@@ -16,6 +16,8 @@ import { opnUrl as opn } from './helpers/opn';
 import { processTimestamp } from './helpers/processTimestamp';
 import { localeFixer } from './helpers/localeFixer';
 import {
+    GameStatus,
+    EventType,
     CommentInterface,
     DictionaryInterface,
     FriendAnswerInterface,
@@ -25,11 +27,7 @@ import {
     QuestionEndInterface,
     QuestionStartInterface,
     VideoGetInterface,
-} from 'qoosb_shared/interfaces';
-import {
-    GameStatus,
-    EventType,
-} from 'qoosb_shared/enums';
+} from 'qoosb_shared/src/index';
 
 // configs
 const config = nconf.env().file({file: './config/dev.json'});
